@@ -26,6 +26,7 @@ function Get-CCMGroup {
     param(
 
         [parameter(Mandatory, ParameterSetName = "Group")]
+        [Alias("Name", "GroupName")]
         [string[]]
         $Group,
 
