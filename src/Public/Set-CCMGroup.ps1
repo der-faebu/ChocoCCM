@@ -24,7 +24,7 @@ function Set-CCMGroup {
     .EXAMPLE
     Set-CCMGroup -Group Test -NewName NewMachineImaged -Description 'Group for freshly imaged machines needing a baseline package pushed to them'
     #>
-    [cmdletBinding(HelpUri="https://chocolatey.org/docs/set-ccmgroup")]
+    [cmdletBinding(HelpUri = "https://chocolatey.org/docs/set-ccmgroup")]
     param(
         [ArgumentCompleter(
             {
@@ -42,6 +42,7 @@ function Set-CCMGroup {
                 }
             }
         )]
+        [Alias("Name", "GroupName")]
         [string]
         $Group,
 
@@ -55,7 +56,7 @@ function Set-CCMGroup {
     )
 
     begin { 
-        if(-not $Session){
+        if (-not $Session) {
             throw "Not authenticated! Please run Connect-CCMServer first!"
         }$existing = Get-CCMGroup -Group $Group 
     }
@@ -63,13 +64,15 @@ function Set-CCMGroup {
 
         if ($NewName) {
             $Name = $NewName
-        } else {
+        }
+        else {
             $Name = $existing.name
         }
 
         if ($NewDescription) {
             $Description = $NewDescription
-        } else {
+        }
+        else {
             $Description = $existing.description
         }
 

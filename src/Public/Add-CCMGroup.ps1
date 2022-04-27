@@ -25,9 +25,10 @@ function Add-CCMGroup {
     .EXAMPLE
     Add-CCMGroup -Name PowerShell -Description "I created this via the ChocoCCM module" -Group Webservers
     #>
-    [cmdletBinding(HelpUri="https://chocolatey.org/docs/add-ccmgroup")]
+    [cmdletBinding(HelpUri = "https://chocolatey.org/docs/add-ccmgroup")]
     param(
         [parameter(mandatory = $true)]
+        [Alias("GroupName")]
         [string]
         $Name,
         
@@ -36,47 +37,50 @@ function Add-CCMGroup {
         $Description,
 
         [parameter()]
+        [Alias("MemberGroup")]
         [string[]]
         $Group,
 
         [parameter()]
+        [Alias("MemberComputer")]
         [string[]]
         $Computer
     )
 
     begin {
 
-        if(-not $Session){
+        if (-not $Session) {
             throw "Not authenticated! Please run Connect-CCMServer first!"
         }
         
         $computers = Get-CCMComputer
         $groups = Get-CCMGroup
 
-        $ComputerCollection = [System.Collections.Generic.List[psobject]]::new()
-        $GroupCollection = [System.Collections.Generic.List[psobject]]::new()
-
-        foreach ($c in $Computer) {
-            if($c -in $current.computers.computerName){
-                Write-Warning "Skipping $c, already exists"
+        $ComputerCollection = foreach ($item in $Computer) {
+            if ($item -in $current.computers.computerName) {
+                Write-Warning "Skipping $item, already exists"
             }
             else {
-                $Cresult = $computers | Where-Object { $_.Name -eq "$c" } | Select-Object  Id
-                $ComputerCollection.Add([pscustomobject]@{computerId = "$($Cresult.Id)" })
+                $Cresult = $computers | Where-Object Name -eq $item | Select-Object -ExpandProperty Id
+                # Drop object into $computerCollection
+                [pscustomobject]@{computerId = $Cresult }
+            }
+        }
+		
+		
+		
+        $GroupCollection = foreach ($item in $Group) {
+            if ($item -in $current.groups.subGroupName) {
+                Write-Warning "Skipping $item, already exists"
+            }
+            else {
+                $Gresult = $groups | Where-Object Name -eq $item | Select-Object -ExpandProperty Id
+                # Drop object into $computerCollection
+                [pscustomobject]@{subGroupId = $Gresult }
             }
         }
 
         $processedComputers = $ComputerCollection
-
-        foreach ($g in $Group) {
-            if($g -in $current.groups.subGroupName){
-                Write-Warning "Skipping $g, already exists"
-            }
-            else {
-            $Gresult = $groups | Where-Object { $_.Name -eq "$g" } | Select-Object Id
-            $GroupCollection.Add([pscustomobject]@{subGroupId = "$($Gresult.Id)"})
-        }
-        }
         $processedGroups = $GroupCollection
 
     }
@@ -85,9 +89,9 @@ function Add-CCMGroup {
         $body = @{
             Name        = $Name
             Description = $Description
-            Groups      = if (-not $processedGroups) { @() } else { @(,$processedGroups) }
-            Computers   = if (-not $processedComputers) { @() } else { @(,$processedComputers) }
-            } | ConvertTo-Json
+            Groups      = if (-not $processedGroups) { $null } else { @(, $processedGroups) }
+            Computers   = if (-not $processedComputers) { $null } else { @(, $processedComputers) }
+        } | ConvertTo-Json
 
         $irmParams = @{
             Uri         = "$($protocol)://$hostname/api/services/app/Groups/CreateOrEdit"
@@ -108,10 +112,10 @@ function Add-CCMGroup {
         }
 
         [pscustomobject]@{
-            name = $Name
+            name        = $Name
             description = $Description
-            groups = $Group
-            computers = $Computer
+            groups      = $Group
+            computers   = $Computer
         }
     }
 

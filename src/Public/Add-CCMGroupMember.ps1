@@ -44,11 +44,11 @@ function Add-CCMGroupMember {
         $Name,
         
         [parameter(Mandatory = $true, ParameterSetName = "Computer")]
-        [Parameter(ParameterSetName='Group')]
+        [Parameter(ParameterSetName = 'Group')]
         [string[]]
         $Computer,
 
-        [parameter(Mandatory = $true ,ParameterSetName = "Group")]
+        [parameter(Mandatory = $true , ParameterSetName = "Group")]
         [string[]]
         $Group
     )
@@ -77,7 +77,7 @@ function Add-CCMGroupMember {
             { $Computer } {
 
                 foreach ($c in $Computer) {
-                    if($c -in $current.computers.computerName){
+                    if ($c -in $current.computers.computerName) {
                         Write-Warning "Skipping $c, already exists"
                     }
                     else {
@@ -93,13 +93,13 @@ function Add-CCMGroupMember {
             'Group' {
 
                 foreach ($g in $Group) {
-                    if($g -in $current.groups.subGroupName){
+                    if ($g -in $current.groups.subGroupName) {
                         Write-Warning "Skipping $g, already exists"
                     }
                     else {
-                    $Gresult = $groups | Where-Object { $_.Name -eq "$g" } | Select-Object Id
-                    $GroupCollection.Add([pscustomobject]@{subGroupId = "$($Gresult.Id)"})
-                }
+                        $Gresult = $groups | Where-Object { $_.Name -eq "$g" } | Select-Object Id
+                        $GroupCollection.Add([pscustomobject]@{subGroupId = "$($Gresult.Id)" })
+                    }
                 }
                 $processedGroups = $GroupCollection
             }
@@ -109,8 +109,8 @@ function Add-CCMGroupMember {
             Name        = $Name
             Id          = ($groups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Id)
             Description = ($groups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Description)
-            Groups      = if (-not $processedGroups) { @() } else { @(,$processedGroups) }
-            Computers   = if (-not $processedComputers) { @() } else { @(,$processedComputers) }
+            Groups      = if (-not $processedGroups) { @() } else { @(, $processedGroups) }
+            Computers   = if (-not $processedComputers) { @() } else { @(, $processedComputers) }
         } | ConvertTo-Json -Depth 3
 
         Write-Verbose $body
@@ -127,10 +127,10 @@ function Add-CCMGroupMember {
             $successGroup = Get-CCMGroupMember -Group $Name
 
             [pscustomobject]@{
-                Name = $Name
+                Name        = $Name
                 Description = $successGroup.Description
-                Groups = $successGroup.Groups.subGroupName
-                Computers = $successGroup.Computers.computerName
+                Groups      = $successGroup.Groups.subGroupName
+                Computers   = $successGroup.Computers.computerName
             }
 
         }

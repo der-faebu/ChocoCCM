@@ -24,10 +24,11 @@ Function Get-CCMComputer {
     .NOTES
     
     #>
-    [cmdletBinding(DefaultParameterSetName = "All",HelpUri="https://chocolatey.org/docs/get-ccmcomputer")]
+    [cmdletBinding(DefaultParameterSetName = "All", HelpUri = "https://chocolatey.org/docs/get-ccmcomputer")]
     Param(
 
         [Parameter(Mandatory, ParameterSetName = "Computer")]
+        [Alias("Name", "ComputerName")]
         [string[]]
         $Computer,
 
