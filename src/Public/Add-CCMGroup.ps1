@@ -28,6 +28,7 @@ function Add-CCMGroup {
     [cmdletBinding(HelpUri="https://chocolatey.org/docs/add-ccmgroup")]
     param(
         [parameter(mandatory = $true)]
+        [Alias("GroupName")]
         [string]
         $Name,
         
@@ -36,10 +37,12 @@ function Add-CCMGroup {
         $Description,
 
         [parameter()]
+        [Alias("MemberGroup")]
         [string[]]
         $Group,
 
         [parameter()]
+        [Alias("MemberComputer")]
         [string[]]
         $Computer
     )
