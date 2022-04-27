@@ -3,3 +3,5 @@
 src/gen/generated
 .DS_Store
 Output/
+.vs/*
+.vs
