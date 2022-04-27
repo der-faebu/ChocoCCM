@@ -13,7 +13,7 @@ This module servers to be a PowerShell wrapper to the underlying API that drives
 2. Run build script
 
     ```powershell
-    ./src/build.ps1 -Build
+    ./src/build.ps1 Build
     ```
 
 3. Import the Module
