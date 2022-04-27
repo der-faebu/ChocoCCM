@@ -54,14 +54,14 @@ Function Get-CCMSoftware {
 
     process {
 
-        if (-not $Id) {
-            $records = Invoke-RestMethod -Uri "$($protocol)://$Hostname/api/services/app/Software/GetAll" -WebSession $Session -UseBasicParsing
+        if (-not $Id -and -not $Software -and -not $Package) {
+            $records = Invoke-RestMethod -Uri "$($protocol)://$Hostname/api/services/app/Software/GetAllWithoutFilter" -WebSession $Session -UseBasicParsing
         } 
         
         Switch ($PSCmdlet.ParameterSetName) {
 
             "Software" {
-                $softwareId = $records.result.items | Where-Object { $_.name -eq "$Software" } | Select-Object -ExpandProperty Id
+                $softwareId = $records.result | Where-Object { $_.name -eq "$Software" } | Select-Object -ExpandProperty Id
                 $softwareId | ForEach-Object {
                     $irmParams = @{
                         WebSession = $Session
@@ -75,7 +75,7 @@ Function Get-CCMSoftware {
             }
 
             "Package" {
-                $packageId = $records.result.items | Where-Object { $_.packageId -eq "$Package" } | Select-Object -ExpandProperty id
+                $packageId = $records.result | Where-Object { $_.packageId -eq "$Package" } | Select-Object -ExpandProperty id
 
                 $packageId | ForEach-Object {
                     $irmParams = @{
@@ -95,11 +95,11 @@ Function Get-CCMSoftware {
                     Uri        = "$($protocol)://$Hostname/api/services/app/ComputerSoftware/GetAllPagedBySoftwareId?filter=&softwareId=$Id&skipCount=0&maxResultCount=500"
                 }
                 $records = Invoke-RestMethod @irmParams
-                $records.result.items
+                $records.result
             }
 
             default {
-                $records.result.items
+                $records.result
             }
 
         }
