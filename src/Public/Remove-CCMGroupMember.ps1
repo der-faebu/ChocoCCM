@@ -41,7 +41,6 @@ function Remove-CCMGroupMember {
             }
         )]
         [string]
-        [Alias("Name", "GroupName")]
         $Group,
 
         [parameter()]

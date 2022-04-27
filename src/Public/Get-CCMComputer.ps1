@@ -28,7 +28,6 @@ Function Get-CCMComputer {
     Param(
 
         [Parameter(Mandatory, ParameterSetName = "Computer")]
-        [Alias("Name", "ComputerName")]
         [string[]]
         $Computer,
 

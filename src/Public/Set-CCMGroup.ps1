@@ -42,7 +42,6 @@ function Set-CCMGroup {
                 }
             }
         )]
-        [Alias("Name", "GroupName")]
         [string]
         $Group,
 
