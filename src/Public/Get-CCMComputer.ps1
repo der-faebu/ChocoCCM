@@ -34,7 +34,11 @@ Function Get-CCMComputer {
 
         [Parameter(Mandatory, ParameterSetName = "Id")]
         [int]
-        $Id
+        $Id,
+
+        [Parameter(ParameterSetName = "Id")]
+        [switch]
+        $ForEdit
     )
 
     begin {
@@ -46,7 +50,8 @@ Function Get-CCMComputer {
     process {
 
         if (-not $Id) {
-            $records = Invoke-RestMethod -Uri "$($protocol)://$Hostname/api/services/app/Computers/GetAll" -WebSession $Session
+            $url = "$($protocol)://$Hostname/api/services/app/Computers/GetAll"
+            $records = Invoke-RestMethod -Uri $url -WebSession $Session
         } 
 
         Switch ($PSCmdlet.ParameterSetName) {
@@ -58,8 +63,13 @@ Function Get-CCMComputer {
             }
 
             "Id" {
-                $records = Invoke-RestMethod -Uri "$($protocol)://$Hostname/api/services/app/Computers/GetComputerForView?Id=$Id" -WebSession $Session
-                $records
+                $url = "$($protocol)://$Hostname/api/services/app/Computers/GetComputerForView?Id=$Id"
+                if ($ForEdit) {
+                    $url = "$($protocol)://$Hostname/api/services/app/Computers/GetAllPagedByComuterId?Id=$Id"
+                }
+                $records = Invoke-RestMethod -Uri $url -WebSession $Session
+
+                $records.result
             }
 
             default {
