@@ -35,16 +35,12 @@ Function Get-CCMComputer {
         [Parameter(Mandatory, ParameterSetName = "Id")]
         [int]
         $Id
-
     )
 
     begin {
         If (-not $Session) {
-
             throw "Unauthenticated! Please run Connect-CCMServer first"
-
         }
-
     }
 
     process {
@@ -52,36 +48,23 @@ Function Get-CCMComputer {
         if (-not $Id) {
             $records = Invoke-RestMethod -Uri "$($protocol)://$Hostname/api/services/app/Computers/GetAll" -WebSession $Session
         } 
-        
+
         Switch ($PSCmdlet.ParameterSetName) {
-          
 
             "Computer" {
-                
                 Foreach ($c in $computer) {
-
                     [pscustomobject]$records.result | Where-Object { $_.name -match "$c" } 
-                
                 }
-
             }
 
             "Id" {
-
                 $records = Invoke-RestMethod -Uri "$($protocol)://$Hostname/api/services/app/Computers/GetComputerForEdit?Id=$Id" -WebSession $Session
                 $records
-
             }
 
             default {
-                
                 $records.result
-    
             }
-            
-
         }
-       
     }
-    
 }
