@@ -1,1 +1,1 @@
-Get-ChildItem .\Public\*.ps1 | % { . $_.Fullname }
+Get-ChildItem "$PSScriptRoot\Public\*.ps1"| % { . $_.Fullname }
