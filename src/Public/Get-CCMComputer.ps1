@@ -65,7 +65,7 @@ Function Get-CCMComputer {
             "Id" {
                 $url = "$($protocol)://$Hostname/api/services/app/Computers/GetComputerForView?Id=$Id"
                 if ($ForEdit) {
-                    $url = "$($protocol)://$Hostname/api/services/app/Computers/GetAllPagedByComuterId?Id=$Id"
+                    $url = "$($protocol)://$Hostname/api/services/app/Computers/GetComputerForEdit?Id=$Id"
                 }
                 $records = Invoke-RestMethod -Uri $url -WebSession $Session
 
