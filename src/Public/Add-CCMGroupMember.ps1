@@ -74,17 +74,19 @@ function Add-CCMGroupMember {
 
         $currentGroupObject = Get-CCMGroup -Id $id | Select-Object *
         $currentGroupObject.computers | ForEach-Object { $ComputerCollection.Add([pscustomobject]@{computerId = "$($_.computerId)" }) }
-        $currentSubgroups = $currentGroupObject.groups.subGroupName
+        $currentSubgroups = $currentGroupObject.groups
 
     }
 
     process {
         switch ($PSCmdlet.ParameterSetName) {
-            { $Computer } {
+            'Computer' {
                 $allComputersToAdd = $Computer
                 foreach ($compToAdd in $allComputersToAdd) {
-                    if ($compToAdd -in $currentGroupObject.computers.FQDN) {
-                        Write-Warning "Skipping $($compToAdd.FQDN), already exists."
+                    $computerObject = Get-CCMComputer -Computer $compToAdd
+
+                    if ($computerObject.ipAddress -in $currentGroupObject.computers.ipAddress) {
+                        Write-Warning "Skipping $($compToAdd), is already in group $($currentGroupObject.Name)."
                     }
                     else {
                         $CompObjectToAdd = $allComputers | Where-Object { $_.FQDN -eq "$compToAdd" } | Select-Object  Id
@@ -103,22 +105,26 @@ function Add-CCMGroupMember {
                     else {
                         $groupObjectToAdd = $allGroups | Where-Object { $_.Name -eq "$groupToAdd" }
                         $GroupCollection += ([pscustomobject]@{
-                                subGroupId               = $groupObjectToAdd.Id
-                                subGroupName             = $groupObjectToAdd.Name
+                                subGroupId   = $groupObjectToAdd.Id
+                                subGroupName = $groupObjectToAdd.Name
                             })
                     }
                 }
-
+                foreach ($gr in $currentSubgroups) {
+                    $GroupCollection += ([pscustomobject]@{
+                            subGroupId   = $gr.subGroupId
+                        })
+                }
                 $processedGroups = $GroupCollection
             }
         }
         
         $body = @{
-            Name        = $Name
-            Id          = ($allGroups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Id)
+            Name = $Name
+            Id   = ($allGroups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Id)
         } 
         
-        if($processedGroups.Count -ne 0){
+        if ($processedGroups.Count -ne 0) {
             $body['Groups'] = $processedGroups
         }
         if ($processedComputers.Count -ne 0) {
