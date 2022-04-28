@@ -27,7 +27,7 @@ Function Get-CCMComputer {
     [cmdletBinding(DefaultParameterSetName = "All", HelpUri = "https://chocolatey.org/docs/get-ccmcomputer")]
     Param(
 
-        [Parameter(Mandatory, ParameterSetName = "Computer")]
+        [Parameter(Mandatory, ParameterSetName = "ComputerFQDN")]
         [Alias("Name", "ComputerName")]
         [string[]]
         $ComputerFQDN,
@@ -51,8 +51,8 @@ Function Get-CCMComputer {
 
         Switch ($PSCmdlet.ParameterSetName) {
 
-            "Computer" {
-                Foreach ($c in $computer) {
+            "ComputerFQDN" {
+                Foreach ($c in $ComputerFQDN) {
                     [pscustomobject]$records.result | Where-Object { $_.fqdn -match "$c" } 
                 }
             }
