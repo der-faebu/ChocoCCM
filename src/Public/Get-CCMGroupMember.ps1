@@ -65,7 +65,7 @@ function Get-CCMGroupMember {
         $gCollection = [System.Collections.Generic.List[psobject]]::new()
 
 
-        if ($record.result.groups -ne -0) {
+        if ($record.result.groups -ne -0 -and $Recurse) {
             
             foreach ($gr in $record.result.groups) {
                 $gCollection.Add($gr)
