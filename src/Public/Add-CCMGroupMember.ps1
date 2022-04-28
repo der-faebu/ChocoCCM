@@ -83,7 +83,7 @@ function Add-CCMGroupMember {
             'Computer' {
                 $allComputersToAdd = $Computer
                 foreach ($compToAdd in $allComputersToAdd) {
-                    $computerObject = Get-CCMComputer -Computer $compToAdd
+                    $computerObject = Get-CCMComputer -ComputerFQDN $compToAdd
 
                     if ($computerObject.ipAddress -in $currentGroupObject.computers.ipAddress) {
                         Write-Warning "Skipping $($compToAdd), is already in group $($currentGroupObject.Name)."
