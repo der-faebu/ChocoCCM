@@ -13,7 +13,7 @@ function Get-CCMGroupMember {
     Get-CCMGroupMember -Group "WebServers"
     
     #>
-    [cmdletBinding(HelpUri="https://chocolatey.org/docs/get-ccmgroup-member")]
+    [cmdletBinding(HelpUri = "https://chocolatey.org/docs/get-ccmgroup-member")]
     param(
         [parameter(Mandatory)]
         [ArgumentCompleter(
@@ -33,11 +33,14 @@ function Get-CCMGroupMember {
             }
         )]
         [string]
-        $Group
+        $Group,
+
+        [switch]
+        $Recurse
     )
 
     begin {
-        if(-not $Session){
+        if (-not $Session) {
             throw "Not authenticated! Please run Connect-CCMServer first!"
         }
     }
@@ -57,17 +60,27 @@ function Get-CCMGroupMember {
             throw $_.Exception.Message
         }
 
+        
         $cCollection = [System.Collections.Generic.List[psobject]]::new()
         $gCollection = [System.Collections.Generic.List[psobject]]::new()
 
-        $record.result.computers | ForEach-Object {
-            $cCollection.Add($_)
+
+        if ($record.result.groups -ne -0) {
+            
+            foreach ($gr in $record.result.groups) {
+                $gCollection.Add($gr)
+                $computers = (Get-CCMGroupMember -Group $gr.subGroupName).Computers
+                if ($computers.Count) {
+                    $cCollection.Add($computers)
+                }
+            }
+        } 
+        else {
+            $record.result.computers | ForEach-Object {
+                $cCollection.Add($_)
+            }
         }
 
-        $record.result.groups | ForEach-Object {
-            $gCollection.Add($_)
-        }
-       
         [pscustomobject]@{
             Name        = $record.result.Name
             Description = $record.result.Description
