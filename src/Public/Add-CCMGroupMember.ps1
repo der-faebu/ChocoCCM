@@ -10,7 +10,7 @@ function Add-CCMGroupMember {
     The group to edit
     
     .PARAMETER Computer
-    The computer(s) to add
+    The FQDN of the computer(s) to add
     
     .PARAMETER Group
     The group(s) to add
@@ -45,6 +45,11 @@ function Add-CCMGroupMember {
         
         [parameter(Mandatory = $true, ParameterSetName = "Computer")]
         [Parameter(ParameterSetName = 'Group')]
+        [Alias('FQDN', 'ComputerFQDN')]
+        [ValidateScript({
+                $_ -match '(.+\.){2}(.+){1}'
+            }
+        )]
         [string[]]
         $Computer,
 
@@ -59,66 +64,74 @@ function Add-CCMGroupMember {
             throw "Not authenticated! Please run Connect-CCMServer first!"
         }
         
-        $computers = Get-CCMComputer
-        $groups = Get-CCMGroup
+        $allComputers = Get-CCMComputer
+        $allGroups = Get-CCMGroup
     
         $ComputerCollection = [System.Collections.Generic.List[psobject]]::new()
         $GroupCollection = [System.Collections.Generic.List[psobject]]::new()
 
         $id = Get-CCMGroup -Group $name | Select-Object -ExpandProperty Id
-        $current = Get-CCMGroup -Id $id | Select-Object *
-        $current.computers | ForEach-Object { $ComputerCollection.Add([pscustomobject]@{computerId = "$($_.computerId)" }) }
-        
+
+        $currentGroupObject = Get-CCMGroup -Id $id | Select-Object *
+        $currentGroupObject.computers | ForEach-Object { $ComputerCollection.Add([pscustomobject]@{computerId = "$($_.computerId)" }) }
+        $currentSubgroups = $currentGroupObject.groups.subGroupName
+
     }
 
     process {
-
         switch ($PSCmdlet.ParameterSetName) {
             { $Computer } {
-
-                foreach ($c in $Computer) {
-                    if ($c -in $current.computers.computerName) {
-                        Write-Warning "Skipping $c, already exists"
+                $allComputersToAdd = $Computer
+                foreach ($compToAdd in $allComputersToAdd) {
+                    if ($compToAdd -in $currentGroupObject.computers.FQDN) {
+                        Write-Warning "Skipping $($compToAdd.FQDN), already exists."
                     }
                     else {
-                        $Cresult = $computers | Where-Object { $_.Name -eq "$c" } | Select-Object  Id
-                        $ComputerCollection.Add([pscustomobject]@{computerId = "$($Cresult.Id)" })
+                        $CompObjectToAdd = $allComputers | Where-Object { $_.FQDN -eq "$compToAdd" } | Select-Object  Id
+                        $ComputerCollection.Add([pscustomobject]@{computerId = "$($CompObjectToAdd.Id)" })
                     }
                 }
-
                 $processedComputers = $ComputerCollection
-                
             }
 
             'Group' {
-
-                foreach ($g in $Group) {
-                    if ($g -in $current.groups.subGroupName) {
-                        Write-Warning "Skipping $g, already exists"
+                $allGroupsToAdd = $Group
+                foreach ($groupToAdd in $allGroupsToAdd) {
+                    if ($groupToAdd -in $currentSubgroups) {
+                        Write-Warning "Skipping $groupToAdd, already exists"
                     }
                     else {
-                        $Gresult = $groups | Where-Object { $_.Name -eq "$g" } | Select-Object Id
-                        $GroupCollection.Add([pscustomobject]@{subGroupId = "$($Gresult.Id)" })
+                        $groupObjectToAdd = $allGroups | Where-Object { $_.Name -eq "$groupToAdd" }
+                        $GroupCollection += ([pscustomobject]@{
+                                subGroupId               = $groupObjectToAdd.Id
+                                subGroupName             = $groupObjectToAdd.Name
+                            })
                     }
                 }
+
                 $processedGroups = $GroupCollection
             }
         }
         
         $body = @{
             Name        = $Name
-            Id          = ($groups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Id)
-            Description = ($groups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Description)
-            Groups      = if (-not $processedGroups) { @() } else { @(, $processedGroups) }
-            Computers   = if (-not $processedComputers) { @() } else { @(, $processedComputers) }
-        } | ConvertTo-Json -Depth 3
+            Id          = ($allGroups | Where-Object { $_.name -eq "$Name" } | Select-Object  -ExpandProperty Id)
+        } 
+        
+        if($processedGroups.Count -ne 0){
+            $body['Groups'] = $processedGroups
+        }
+        if ($processedComputers.Count -ne 0) {
+            $body['Computers'] = $processedComputers
+        }
+        $jsonBody = $body | ConvertTo-Json -Depth 3
 
         Write-Verbose $body
         $irmParams = @{
             Uri         = "$($protocol)://$hostname/api/services/app/Groups/CreateOrEdit"
             Method      = "post"
             ContentType = "application/json"
-            Body        = $body
+            Body        = $jsonBody
             WebSession  = $Session
         }
 
@@ -132,7 +145,6 @@ function Add-CCMGroupMember {
                 Groups      = $successGroup.Groups.subGroupName
                 Computers   = $successGroup.Computers.computerName
             }
-
         }
 
         catch {
