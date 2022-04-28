@@ -5,3 +5,5 @@ src/gen/generated
 Output/
 .vs/*
 .vs
+samples/Program/*
+samples/Program
