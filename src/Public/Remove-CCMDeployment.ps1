@@ -35,8 +35,9 @@ function Remove-CCMDeployment {
                 }
             }
         )]
+        [Alias("Deployment")]
         [string[]]
-        $Deployment
+        $Name
     )
 
     begin {
@@ -45,18 +46,18 @@ function Remove-CCMDeployment {
         }
         $deployId = [System.Collections.Generic.List[string]]::new() 
         
-        $Deployment | % { $deployId.Add($(Get-CCMDeployment -Name $_ | Select-Object -ExpandProperty Id)) }
+        $Name | % { $deployId.Add($(Get-CCMDeployment -Name $_ | Select-Object -ExpandProperty Id)) }
     }
     process {
         
         $deployId | ForEach-Object {
-            if ($PSCmdlet.ShouldProcess("$Deployment", "DELETE")) {
+            if ($PSCmdlet.ShouldProcess("$Name", "DELETE")) {
                 $irmParams = @{
                     Uri = "$($protocol)://$hostname/api/services/app/DeploymentPlans/Delete?Id=$($_)"
                     Method = "DELETE"
                     ContentType = "application/json"
+                    WebSession  = $Session
                 }
-    
                 Invoke-RestMethod @irmParams
             }
 
