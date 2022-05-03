@@ -28,9 +28,9 @@ Function Get-CCMComputer {
     Param(
 
         [Parameter(Mandatory, ParameterSetName = "ComputerFQDN")]
-        [Alias("Name", "ComputerName")]
+        [Alias("Name", "ComputerName", "ComputerFQDN")]
         [string[]]
-        $ComputerFQDN,
+        $FQDN,
 
         [Parameter(Mandatory, ParameterSetName = "Id")]
         [int]

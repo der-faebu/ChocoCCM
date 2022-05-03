@@ -6,14 +6,17 @@ Function Get-CCMSoftware {
     .DESCRIPTION
     Return information about each piece of software managed across all of your estate inside Central Management
     
-    .PARAMETER Software
+    .PARAMETER SoftwareName
     Return information about a specific piece of software by friendly name
 
-    .PARAMETER Package
+    .PARAMETER PackageName
     Return information about a specific package
     
-    .PARAMETER Id
+    .PARAMETER PackageId
     Return information about a specific piece of software by id
+
+    .PARAMETER ComputerId
+    Returns a list of software installed on a given computer
     
     .EXAMPLE
     Get-CCMSoftware
@@ -33,16 +36,23 @@ Function Get-CCMSoftware {
     Param(
             
         [Parameter(Mandatory, ParameterSetName = "Software")]
+        [Alias("Software")]
         [string]
-        $Software,
+        $SoftwareName,
         
         [Parameter(Mandatory, ParameterSetName = "Package")]
+        [Alias("Package")]
         [string]
-        $Package,
+        $PackageName,
 
         [Parameter(Mandatory, ParameterSetName = "Id")]
+        [Alias("Id")]
         [int]
-        $Id
+        $PackageId,
+        
+        [Parameter(Mandatory, ParameterSetName = "ComputerId")]
+        [int]
+        $ComputerId
 
     )
 
@@ -61,7 +71,7 @@ Function Get-CCMSoftware {
         Switch ($PSCmdlet.ParameterSetName) {
 
             "Software" {
-                $softwareId = $records.result | Where-Object { $_.name -eq "$Software" } | Select-Object -ExpandProperty Id
+                $softwareId = $records.result | Where-Object { $_.name -eq "$SoftwareName" } | Select-Object -ExpandProperty Id
                 $softwareId | ForEach-Object {
                     $irmParams = @{
                         WebSession = $Session
@@ -69,13 +79,13 @@ Function Get-CCMSoftware {
                     }
                 
                     $records = Invoke-RestMethod @irmParams
-                    $records.result
+                    $records.result.items
                 }
 
             }
 
             "Package" {
-                $packageId = $records.result | Where-Object { $_.packageId -eq "$Package" } | Select-Object -ExpandProperty id
+                $packageId = $records.result | Where-Object { $_.packageId -eq "$PackageName" } | Select-Object -ExpandProperty id
 
                 $packageId | ForEach-Object {
                     $irmParams = @{
@@ -84,7 +94,7 @@ Function Get-CCMSoftware {
                     }
                 
                     $records = Invoke-RestMethod @irmParams
-                    $records.result
+                    $records.result.items
                 }
             }
 
@@ -92,10 +102,20 @@ Function Get-CCMSoftware {
 
                 $irmParams = @{
                     WebSession = $Session
-                    Uri        = "$($protocol)://$Hostname/api/services/app/ComputerSoftware/GetAllPagedBySoftwareId?filter=&softwareId=$Id&skipCount=0&maxResultCount=500"
+                    Uri        = "$($protocol)://$Hostname/api/services/app/ComputerSoftware/GetAllPagedBySoftwareId?filter=&softwareId=$PackageId&skipCount=0&maxResultCount=500"
                 }
                 $records = Invoke-RestMethod @irmParams
-                $records.result
+                $records.result.items
+            }
+
+            "ComputerId" {
+
+                $irmParams = @{
+                    WebSession = $Session
+                    Uri        = "$($protocol)://$Hostname/api/services/app/ComputerSoftware/GetAllPagedByComputerId?filter=&computerId=$ComputerId&maxResultCount=500"
+                }
+                $records = Invoke-RestMethod @irmParams
+                $records.result.items
             }
 
             default {
@@ -103,6 +123,5 @@ Function Get-CCMSoftware {
             }
 
         }
-       
     }
 }
