@@ -108,12 +108,12 @@ function New-CCMDeploymentStep {
         $ExecutionTimeoutSeconds = '14400',
 
         [parameter()]
-        [switch]
+        [bool]
         $FailOnError = $true,
 
         [parameter()]
-        [switch]
-        $RequireSuccessOnAllComputers = $false,
+        [bool]
+        $RequireSuccessOnAllComputers,
 
         [parameter()]
         [string[]]
